@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+#
+# This file is part of environmentd.
+#
+# environmentd is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# environmentd is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with environmentd.  If not, see <http://www.gnu.org/licenses/>.
+
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-self-use
+# pylint: disable=missing-docstring
+# pylint: disable=invalid-name
+
+import argparse
+import datetime
+import json
+import threading
+import Pyro4
+import warwick.observatory as observatory
+
+# Copy these overrides to the code being tested
+observatory.daemons.onemetre_vaisala.host = '127.0.0.1'
+observatory.daemons.onemetre_tcs_diskspace.host = '127.0.0.1'
+observatory.daemons.onemetre_tcs_diskspace.port = 9010
+observatory.daemons.observatory_network_ping.host = '127.0.0.1'
+observatory.daemons.onemetre_roomalert.host = '127.0.0.1'
+observatory.daemons.onemetre_vaisala.host = '127.0.0.1'
+observatory.daemons.onemetre_power.host = '127.0.0.1'
+observatory.daemons.observatory_log.host = '127.0.0.1'
+
+test_daemons = [
+    ('vaisala', observatory.daemons.onemetre_vaisala, 'vaisala.json'),
+    ('diskspace', observatory.daemons.onemetre_tcs_diskspace, 'diskspace.json'),
+    ('netping', observatory.daemons.observatory_network_ping, 'netping.json'),
+    ('roomalert', observatory.daemons.onemetre_roomalert, 'roomalert.json'),
+    ('power', observatory.daemons.onemetre_power, 'power.json'),
+]
+
+class TestDaemon:
+    def __init__(self, filename):
+        self._filename = filename
+
+    @Pyro4.expose
+    def last_measurement(self):
+        with open(self._filename) as data_file:
+            data = json.load(data_file)
+            data['date'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+            return data
+
+class TestLogDaemon:
+    def __log(self, source, message_type, message):
+        print(source, message_type, message)
+
+    @Pyro4.expose
+    def log_info(self, source, message):
+        self.__log(source, 'info', message)
+
+    @Pyro4.expose
+    def log_warning(self, source, message):
+        self.__log(source, 'warning', message)
+
+    @Pyro4.expose
+    def log_error(self, source, message):
+        self.__log(source, 'error', message)
+
+    @Pyro4.expose
+    def messages(self):
+        return list()
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Fake daemons')
+    parser.add_argument('--log', action='store_true')
+    for d in test_daemons:
+        parser.add_argument('--' + d[0], action='store_true')
+
+    args = parser.parse_args()
+    if args.log:
+        daemon = observatory.daemons.observatory_log
+        threading.Thread(target=lambda: daemon.launch(TestLogDaemon())).start()
+
+    for d in test_daemons:
+        if getattr(args, d[0]):
+            threading.Thread(target=lambda: d[1].launch(TestDaemon(d[2]))).start()

@@ -1,0 +1,10 @@
+{
+    "internal_temp": 19,
+    "internal_humidity": 45,
+    "roomalert_temp": 25,
+    "roomalert_humidity": 5,
+    "truss_temp": 19,
+    "hatch_closed": true,
+    "trap_closed": true,
+    "security_system_safe": true
+}
