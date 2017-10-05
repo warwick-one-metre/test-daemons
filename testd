@@ -36,12 +36,16 @@ observatory.daemons.onemetre_roomalert.host = '127.0.0.1'
 observatory.daemons.onemetre_vaisala.host = '127.0.0.1'
 observatory.daemons.onemetre_power.host = '127.0.0.1'
 observatory.daemons.observatory_log.host = '127.0.0.1'
+observatory.daemons.superwasp_log.host = '127.0.0.1'
+observatory.daemons.tng_log.host = '127.0.0.1'
 
 test_daemons = [
     ('vaisala', observatory.daemons.onemetre_vaisala, 'vaisala.json'),
     ('diskspace', observatory.daemons.onemetre_tcs_diskspace, 'diskspace.json'),
     ('netping', observatory.daemons.observatory_network_ping, 'netping.json'),
     ('roomalert', observatory.daemons.onemetre_roomalert, 'roomalert.json'),
+    ('superwasp', observatory.daemons.superwasp_log, 'superwasp.json'),
+    ('tng', observatory.daemons.tng_log, 'tng.json'),
     ('power', observatory.daemons.onemetre_power, 'power.json'),
 ]
 

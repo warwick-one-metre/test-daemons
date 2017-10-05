@@ -1,0 +1,12 @@
+{
+    "sky_temp": -40.6,
+    "ext_temperature": 15.9,
+    "pressure": 777.0,
+    "software_version": "1.12 (git-99695b0)",
+    "ext_humidity": 21.0,
+    "wind_speed": 5,
+    "wind_direction": 138,
+    "jd": 2458032.08388,
+    "dew_point_delta": 22.15
+}
+
