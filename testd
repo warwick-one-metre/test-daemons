@@ -46,7 +46,6 @@ test_daemons = [
     ('roomalert', daemons.onemetre_roomalert, 'roomalert.json'),
     ('superwasp', daemons.superwasp_log, 'superwasp.json'),
     ('tng', daemons.tng_log, 'tng.json'),
-    ('power', daemons.onemetre_power, 'power.json'),
 ]
 
 class TestDaemon:
@@ -59,6 +58,27 @@ class TestDaemon:
             data = json.load(data_file)
             data['date'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             return data
+
+class TestPowerDaemon(TestDaemon):
+    def __init__(self, filename):
+        with open(filename) as data_file:
+            self._data = json.load(data_file)
+
+    @Pyro4.expose
+    def last_measurement(self):
+        self._data['date'] = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        return self._data
+
+    @Pyro4.expose
+    def switch(self, name, enabled):
+        if name in self._data:
+            self._data[name] = enabled
+            return True
+        return False
+
+    @Pyro4.expose
+    def value(self, name):
+        return self._data[name]
 
 class TestLogDaemon:
     def __log(self, source, message_type, message):
@@ -83,6 +103,7 @@ class TestLogDaemon:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Fake daemons')
     parser.add_argument('--log', action='store_true')
+    parser.add_argument('--power', action='store_true')
     for d in test_daemons:
         parser.add_argument('--' + d[0], action='store_true')
 
@@ -90,6 +111,10 @@ if __name__ == '__main__':
     if args.log:
         daemon = daemons.observatory_log
         threading.Thread(target=lambda: daemon.launch(TestLogDaemon())).start()
+
+    if args.power:
+        daemon = daemons.onemetre_power
+        threading.Thread(target=lambda: daemon.launch(TestPowerDaemon('power.json'))).start()
 
     for d in test_daemons:
         if getattr(args, d[0]):
